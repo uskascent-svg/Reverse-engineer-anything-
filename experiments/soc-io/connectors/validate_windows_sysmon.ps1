@@ -86,7 +86,8 @@ try {
     $summary.result = "PASS"
     $summary.stage = "complete"
     $summary.matched_benign_test_event = $true
-    $summary.source_event_id = $match.event_id
+    $sysmonDetails = $match.message | ConvertFrom-Json
+    $summary.source_event_id = $sysmonDetails.sysmon_event_id
     $summary.event_time_utc = $match.timestamp
     $summary.rows_collected = $rows.Count
     Write-Host "The benign process-start marker was observed in normalized collector output."
