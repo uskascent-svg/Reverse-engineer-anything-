@@ -1,6 +1,6 @@
 # SOC-IO production readiness and implementation contract
 
-Status: **requirements and design contract; implementation incomplete**. An experimental opt-in local Windows/Sysmon adapter and preliminary PostgreSQL case-store schema have been added; neither constitutes a production connector service or multi-user application.  
+Status: **requirements and design contract; implementation incomplete**. An experimental opt-in local Windows/Sysmon adapter, a FastAPI OIDC-authenticated case API, a PostgreSQL case-store schema, and disposable PostgreSQL integration tests have been added. The Windows lab procedure is prepared but has not been run on a connected Windows host; the API still lacks real OIDC-provider integration tests and deployment hardening.  
 Scope: isolated experiment under `experiments/soc-io/`. This document does not authorize merging SOC-IO into REA's core CLI/MCP or changing REA's default network behavior.
 
 ## Release gates
@@ -86,7 +86,7 @@ Initial response candidates should be narrowly scoped and reversible. Do not aut
 1. **Foundation:** versioned normalized event schema, connector interface, health/coverage model, provenance, and security threat model.
 2. **One real connector:** select one provider and deliver end-to-end read-only collection with integration tests, cursor recovery, rate-limit handling, and setup documentation. Do not claim all connector families are supported.
 3. **Detection quality:** add rule metadata, ATT&CK mapping, negative fixtures, and bounded hunting/correlation.
-4. **Persistent cases:** database migrations, server-side RBAC, tenant isolation, audit trail, backup/restore tests.
+4. **Service hardening:** reviewed migrations, real OIDC/JWKS integration tests, expanded authorization matrix, deployment hardening, audit protection, and backup/restore tests.
 5. **Evaluation:** representative labeled replay corpus, time-separated backtests, reproducible metrics, and drift monitoring.
 6. **Forecasting review:** only after Gate D passes; keep disabled until sign-off.
 7. **Response review:** independent approval and lab validation under Gate E.
