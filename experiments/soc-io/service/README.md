@@ -85,7 +85,7 @@ python -m pip install -r service/requirements.txt
 python -m unittest discover -s . -p 'test_*.py' -v
 ```
 
-The workflow also runs integration tests against a disposable PostgreSQL 16 service, using a test-only application role to exercise persistence, tenant isolation, role guards, notes, events, and audit rows. Those tests patch token verification and therefore do not validate a real OIDC provider/JWKS endpoint. Before shared deployment, add a reviewed migration runner, real test-issuer/JWKS integration, concurrent update tests, broader authorization matrix tests, database privilege checks, and backup/restore drills.
+The workflow runs PostgreSQL 16 integration tests against a disposable database and a local HTTPS JWKS integration suite that exercises actual RS256 signature validation, issuer/audience/expiry checks, wrong-signature rejection, and algorithm restrictions. The local HTTPS issuer uses a test-only key/certificate; it is not your selected identity provider. To test the real provider, configure the same issuer, audience, and HTTPS JWKS URL used by the deployment, supply a short-lived test access token as `SOCIO_OIDC_TEST_TOKEN`, and run `python -m unittest service.test_oidc_provider -v` from `experiments/soc-io`. Never put that token in source control or CI logs. External-provider validation is not complete until this test is run against your configured staging identity provider. Before shared deployment, also complete reviewed migrations, concurrent update tests, broader authorization matrix tests, database privilege checks, and backup/restore drills.
 
 ## Important limitations and review items
 
@@ -99,6 +99,6 @@ The workflow also runs integration tests against a disposable PostgreSQL 16 serv
   cryptographically tamper-proof against database owners/superusers.
 - User provisioning, role administration endpoints, SSO setup UI, case attachment
   uploads, and notification delivery are not implemented.
-- No real Windows lab validation has been performed by CI. Follow
+- No real Windows lab validation has been performed by CI. The optional manual job retains only a sanitized JSON summary artifact (14-day retention); raw event JSONL stays on the lab host. Follow
   `../connectors/WINDOWS_SYSMON_VALIDATION.md` on a dedicated test host.
 - No forecasting, threat-probability output, or automated response action is implemented.
