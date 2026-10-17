@@ -11,6 +11,12 @@ on:
       - "experiments/soc-io/**"
       - ".github/workflows/soc-io.yml"
   workflow_dispatch:
+    inputs:
+      run_windows_sysmon_lab:
+        description: 'Run the benign Sysmon collection check on a configured self-hosted Windows lab runner'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,3 +57,21 @@ jobs:
           python -m json.tool /tmp/soc-io-report.json > /dev/null
           python experiments/soc-io/evaluate.py experiments/soc-io/examples/events.jsonl experiments/soc-io/examples/labels.jsonl > /tmp/soc-io-evaluation.json
           python -m json.tool /tmp/soc-io-evaluation.json > /dev/null
+
+  windows-sysmon-lab:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_windows_sysmon_lab
+    runs-on: [self-hosted, Windows, X64, soc-io-sysmon-lab]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate real local Sysmon collection
+        shell: pwsh
+        run: |
+          .\experiments\soc-io\connectors\validate_windows_sysmon.ps1 -RunBenignProcessTest
+      - name: Record validation boundary
+        shell: pwsh
+        run: |
+          Write-Output "Validation ran on a configured self-hosted Windows/Sysmon lab runner."
+          Write-Output "Raw event JSONL remains in the runner user's TEMP directory and is not uploaded as a CI artifact."
