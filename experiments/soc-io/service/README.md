@@ -81,7 +81,7 @@ claim database, identity-provider, or collector health.
 Run unit tests from the `experiments/soc-io` directory:
 
 ```sh
-python -m pip install -r service/requirements.txt
+python -m pip install -r service/requirements-test.txt
 python -m unittest discover -s . -p 'test_*.py' -v
 ```
 
