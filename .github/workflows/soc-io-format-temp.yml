@@ -1,6 +1,14 @@
 name: Temporary SOC-IO formatting pass
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/soc-io.yml
+      - docs/soc-io-production-readiness.md
+      - docs/soc-io-proposal.md
+      - experiments/soc-io/README.md
+      - experiments/soc-io/dashboard.html
+      - tests/boundary/cli/keyedArchivePrototypeKeyCli.test.ts
   push:
     branches:
       - feature/soc-io-proposal
