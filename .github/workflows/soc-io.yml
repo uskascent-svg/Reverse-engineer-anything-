@@ -68,8 +68,18 @@ jobs:
           python-version: "3.11"
       - name: Validate real local Sysmon collection
         shell: pwsh
+        env:
+          SOCIO_VALIDATION_SUMMARY_PATH: ${{ runner.temp }}\soc-io-sysmon-validation-summary.json
         run: |
           .\experiments\soc-io\connectors\validate_windows_sysmon.ps1 -RunBenignProcessTest
+      - name: Retain sanitized validation result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soc-io-windows-sysmon-sanitized-summary
+          path: ${{ runner.temp }}\soc-io-sysmon-validation-summary.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Record validation boundary
         shell: pwsh
         run: |
