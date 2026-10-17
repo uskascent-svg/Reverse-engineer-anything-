@@ -70,8 +70,11 @@ class WindowsSysmonConnectorTests(unittest.TestCase):
         self.assertIn("--enable-local-read-only", stderr.getvalue())
 
     def test_bounds_are_explicit(self):
-        with self.assertRaises(ValueError):
-            connector.collect(datetime.now(timezone.utc), datetime.now(timezone.utc), 0)
+        start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        end = datetime(2026, 1, 2, tzinfo=timezone.utc)
+        with patch.object(connector.os, "name", "nt"):
+            with self.assertRaisesRegex(ValueError, "max_events"):
+                connector.collect(start, end, 0)
 
     def test_query_is_read_only_and_has_no_operator_interpolation(self):
         self.assertIn("Get-WinEvent -FilterHashtable", connector.POWERSHELL_SCRIPT)
