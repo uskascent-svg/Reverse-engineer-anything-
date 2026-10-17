@@ -163,6 +163,37 @@ class CaseApiPostgresIntegrationTests(unittest.TestCase):
                     (self.tenant_a, case_id, self.bob),
                 )
 
+            with self.assertRaises(psycopg.errors.ForeignKeyViolation):
+                conn.execute(
+                    """
+                    INSERT INTO socio_case_notes
+                      (tenant_id, case_id, author_user_id, body)
+                    VALUES (%s, %s, %s, 'forged cross-tenant author')
+                    """,
+                    (self.tenant_a, case_id, self.bob),
+                )
+
+            with self.assertRaises(psycopg.errors.ForeignKeyViolation):
+                conn.execute(
+                    """
+                    INSERT INTO socio_case_evidence
+                      (tenant_id, case_id, evidence_type, source_name,
+                       source_event_id, reference_uri, added_by)
+                    VALUES (%s, %s, 'event', 'test', 'event-1', 'local:test', %s)
+                    """,
+                    (self.tenant_a, case_id, self.bob),
+                )
+
+            with self.assertRaises(psycopg.errors.ForeignKeyViolation):
+                conn.execute(
+                    """
+                    INSERT INTO socio_audit_events
+                      (tenant_id, actor_user_id, action, target_type, target_id, outcome)
+                    VALUES (%s, %s, 'forged', 'case', %s, 'success')
+                    """,
+                    (self.tenant_a, self.bob, str(case_id)),
+                )
+
     def test_tenant_membership_is_required(self):
         response = self.request_as("alice", self.tenant_b, "GET", "/api/cases")
         self.assertEqual(response.status_code, 403)
