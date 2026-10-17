@@ -25,6 +25,10 @@ python3 -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
 All included sample events and indicators are synthetic/documentation-only.
 The IOC example uses reserved example IP ranges and an invalid example domain.
 
+## Deployment security review
+
+See [the preliminary deployment security review](../../docs/soc-io-security-review.md). The API is not approved for shared or production use until the Windows lab, external staging OIDC, database authorization, and deployment-hardening gates in that review are evidenced.
+
 ## Authenticated multi-user case API (experimental)
 
 The initial FastAPI API and PostgreSQL schema are in `experiments/soc-io/service/`.
