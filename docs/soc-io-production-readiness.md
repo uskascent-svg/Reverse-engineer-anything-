@@ -1,6 +1,6 @@
 # SOC-IO production readiness and implementation contract
 
-Status: **requirements and design contract; implementation incomplete**  
+Status: **requirements and design contract; implementation incomplete**. An experimental opt-in local Windows/Sysmon adapter and preliminary PostgreSQL case-store schema have been added; neither constitutes a production connector service or multi-user application.  
 Scope: isolated experiment under `experiments/soc-io/`. This document does not authorize merging SOC-IO into REA's core CLI/MCP or changing REA's default network behavior.
 
 ## Release gates
@@ -12,7 +12,7 @@ SOC-IO must not be described as production-ready until each applicable gate is i
 Implement connectors as independently enabled adapters. All connectors are disabled unless the operator explicitly enables and configures them. No credential discovery, broad host scanning, or telemetry export by default.
 
 Initial connector families:
-- **Windows / Sysmon:** consume explicitly selected local EVTX exports or a configured Windows Event Log subscription; map process, network, image-load, registry, DNS, and process-access events while preserving EventRecordID, channel, provider, computer, event time, and ingestion time.
+- **Windows / Sysmon:** an early experimental adapter now queries the local Sysmon Operational channel with PowerShell `Get-WinEvent`, explicit `--enable-local-read-only` opt-in, bounded time/event limits, and JSONL output. It maps common event IDs and preserves host, source-local record ID, event time, and event payload. It is not a remote collector or service-managed connector; durable checkpoints, source health API, broader schema mapping, and a real Windows lab integration test remain outstanding. The remaining connector contract still requires ingestion time, channel/provider provenance, health, cursor recovery, and integration validation.
 - **Linux:** consume configured journald or auditd sources; preserve boot ID, machine identity, audit serial/correlation IDs, original timestamps, and parser status.
 - **Identity platforms:** vendor-specific, read-only API adapters with explicit tenant, endpoint, event categories, cursor/checkpoint, and scopes. Start with one provider only after its API contract and pagination/rate-limit behavior are tested.
 - **Cloud audit logs:** provider-specific read-only collection (for example, AWS CloudTrail, Microsoft Entra/Azure activity, or Google Cloud Audit Logs), with explicit account/project/tenant and region/scope allowlists.
