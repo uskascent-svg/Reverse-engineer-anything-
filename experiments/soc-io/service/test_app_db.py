@@ -88,6 +88,12 @@ class CaseApiPostgresIntegrationTests(unittest.TestCase):
         case = created.json()
         case_id = case["id"]
 
+        blank_note = self.request_as(
+            "alice", self.tenant_a, "POST", f"/api/cases/{case_id}/notes",
+            json={"body": "   "},
+        )
+        self.assertEqual(blank_note.status_code, 422)
+
         note = self.request_as(
             "alice", self.tenant_a, "POST", f"/api/cases/{case_id}/notes",
             json={"body": "Review the process-start evidence."},
