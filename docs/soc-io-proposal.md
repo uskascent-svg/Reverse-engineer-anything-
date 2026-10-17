@@ -1,6 +1,6 @@
 # SOC-IO: SOC analyst extension proposal
 
-Status: **draft proposal — not integrated, not validated, and not production-ready**
+Status: **draft proposal with isolated offline prototype — not integrated, not validated, and not production-ready**
 
 ## Goal
 
@@ -113,4 +113,4 @@ Separate proposal for human-approved playbooks, simulation/dry-run, authorizatio
 
 ## Current state
 
-This document is a design proposal only. No SOC-IO engine, ingestion connector, prediction model, dashboard, detection rule set, or live response capability is implemented by this document. Do not use it as a production SOC or claim predictive effectiveness until the implementation and evaluation phases are completed.
+This document began as a design proposal. An isolated experimental prototype now exists under `experiments/soc-io/`: local JSONL ingestion, bounded validation, deterministic rules for repeated authentication failures, success-after-failures, encoded PowerShell, processes launched from common staging paths, and matches against locally supplied IP/domain/hash indicators. It includes synthetic fixtures, a CLI/JSON report, and standard-library unit tests. No live ingestion connector, trained prediction model, dashboard, case-management workflow, or response capability exists. Local execution and tests could not be run in the current environment because GitHub DNS/network access failed; do not treat the prototype as validated or production-ready.
