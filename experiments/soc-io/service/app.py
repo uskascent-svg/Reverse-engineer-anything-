@@ -184,6 +184,8 @@ async def current_principal(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail closed at startup instead of returning 500s for every auth request.
+    oidc_settings()
     dsn = os.getenv("DATABASE_URL", "").strip()
     if not dsn:
         raise RuntimeError("DATABASE_URL must be configured before starting SOC-IO service")
@@ -227,6 +229,9 @@ def who_am_i(principal: Annotated[Principal, Depends(current_principal)]):
 @app.post("/api/cases", status_code=201)
 def create_case(body: CaseCreate, principal: Annotated[Principal, Depends(current_principal)]):
     require_role(principal.role, {"analyst", "incident_lead", "administrator"})
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=422, detail="Title cannot be blank")
     if body.severity not in SEVERITIES:
         raise HTTPException(status_code=422, detail="Invalid severity")
     row = principal.conn.execute(
@@ -237,7 +242,7 @@ def create_case(body: CaseCreate, principal: Annotated[Principal, Depends(curren
         RETURNING id, tenant_id, title, summary, status, severity, assigned_to,
                   created_by, version, created_at, updated_at
         """,
-        (principal.tenant_id, body.title.strip(), body.summary, body.severity, principal.user_id),
+        (principal.tenant_id, title, body.summary, body.severity, principal.user_id),
     ).fetchone()
     principal.conn.execute(
         """
@@ -299,10 +304,19 @@ def update_case(
     updates = body.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(status_code=422, detail="At least one field is required")
+    for required_field in ("title", "summary", "status", "severity"):
+        if required_field in updates and updates[required_field] is None:
+            raise HTTPException(status_code=422, detail=f"{required_field} cannot be null")
+    if "title" in updates:
+        updates["title"] = updates["title"].strip()
+        if not updates["title"]:
+            raise HTTPException(status_code=422, detail="Title cannot be blank")
     if "status" in updates and updates["status"] not in CASE_STATUSES:
         raise HTTPException(status_code=422, detail="Invalid status")
     if "severity" in updates and updates["severity"] not in SEVERITIES:
         raise HTTPException(status_code=422, detail="Invalid severity")
+    if "status" in updates and updates["status"] in {"contained", "resolved", "closed"} and principal.role == "analyst":
+        raise HTTPException(status_code=403, detail="Incident lead approval is required for terminal case states")
     if "assigned_to" in updates and principal.role not in {"incident_lead", "administrator"}:
         raise HTTPException(status_code=403, detail="Only incident leads/admins can assign cases")
     if "assigned_to" in updates and updates["assigned_to"] is not None:
