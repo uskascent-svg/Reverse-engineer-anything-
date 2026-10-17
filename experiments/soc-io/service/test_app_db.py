@@ -131,6 +131,38 @@ class CaseApiPostgresIntegrationTests(unittest.TestCase):
                 self.assertEqual(len(visible), 1)
                 self.assertEqual(hidden, [])
 
+    def test_database_rejects_cross_tenant_case_actors_and_assignees(self):
+        # Verify constraints independently of API checks. Even a direct SQL write
+        # must not attach a Tenant B identity to a Tenant A case/history row.
+        with psycopg.connect(self.admin_dsn, autocommit=True) as conn:
+            case_id = conn.execute(
+                """
+                INSERT INTO socio_cases (tenant_id, title, created_by)
+                VALUES (%s, 'Integrity constraint test', %s)
+                RETURNING id
+                """,
+                (self.tenant_a, self.alice),
+            ).fetchone()[0]
+
+            with self.assertRaises(psycopg.errors.ForeignKeyViolation):
+                conn.execute(
+                    """
+                    INSERT INTO socio_cases (tenant_id, title, created_by, assigned_to)
+                    VALUES (%s, 'Invalid cross-tenant assignment', %s, %s)
+                    """,
+                    (self.tenant_a, self.alice, self.bob),
+                )
+
+            with self.assertRaises(psycopg.errors.ForeignKeyViolation):
+                conn.execute(
+                    """
+                    INSERT INTO socio_case_events
+                      (tenant_id, case_id, actor_user_id, event_type, event_data)
+                    VALUES (%s, %s, %s, 'forged_actor', '{}'::jsonb)
+                    """,
+                    (self.tenant_a, case_id, self.bob),
+                )
+
     def test_tenant_membership_is_required(self):
         response = self.request_as("alice", self.tenant_b, "GET", "/api/cases")
         self.assertEqual(response.status_code, 403)
