@@ -1,0 +1,7 @@
+{"event_id":"auth-001","timestamp":"2026-10-17T08:00:00Z","source":"synthetic-idp","event_type":"authentication","host":"workstation-07","user":"analyst-demo","outcome":"failed","src_ip":"192.0.2.55"}
+{"event_id":"auth-002","timestamp":"2026-10-17T08:01:00Z","source":"synthetic-idp","event_type":"authentication","host":"workstation-07","user":"analyst-demo","outcome":"failed","src_ip":"192.0.2.55"}
+{"event_id":"auth-003","timestamp":"2026-10-17T08:02:00Z","source":"synthetic-idp","event_type":"authentication","host":"workstation-07","user":"analyst-demo","outcome":"failed","src_ip":"192.0.2.55"}
+{"event_id":"auth-004","timestamp":"2026-10-17T08:03:00Z","source":"synthetic-idp","event_type":"authentication","host":"workstation-07","user":"analyst-demo","outcome":"failed","src_ip":"192.0.2.55"}
+{"event_id":"auth-005","timestamp":"2026-10-17T08:04:00Z","source":"synthetic-idp","event_type":"authentication","host":"workstation-07","user":"analyst-demo","outcome":"failed","src_ip":"192.0.2.55"}
+{"event_id":"auth-006","timestamp":"2026-10-17T08:05:00Z","source":"synthetic-idp","event_type":"authentication","host":"workstation-07","user":"analyst-demo","outcome":"success","src_ip":"192.0.2.55"}
+{"event_id":"proc-001","timestamp":"2026-10-17T08:06:00Z","source":"synthetic-endpoint","event_type":"process_start","host":"workstation-07","user":"analyst-demo","process":"C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe","command_line":"powershell.exe -EncodedCommand ZABlAG0AbwA="}

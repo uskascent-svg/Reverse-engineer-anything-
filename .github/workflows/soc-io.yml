@@ -1,0 +1,119 @@
+name: SOC-IO prototype checks
+
+on:
+  pull_request:
+    paths:
+      - "experiments/soc-io/**"
+      - ".github/workflows/soc-io.yml"
+  push:
+    branches: ["feature/soc-io-proposal"]
+    paths:
+      - "experiments/soc-io/**"
+      - ".github/workflows/soc-io.yml"
+  workflow_dispatch:
+    inputs:
+      run_windows_sysmon_lab:
+        description: 'Run the benign Sysmon collection check on a configured self-hosted Windows lab runner'
+        required: false
+        type: boolean
+        default: false
+      run_real_oidc_provider_test:
+        description: 'Test configured staging OIDC issuer/JWKS using a short-lived token stored as a GitHub secret'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: socio_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d socio_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SOCIO_TEST_ADMIN_DSN: postgresql://postgres:postgres@localhost:5432/socio_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install service test dependencies
+        run: python -m pip install -r experiments/soc-io/service/requirements-test.txt
+      - name: Compile Python sources
+        run: python -m py_compile experiments/soc-io/soc_io.py experiments/soc-io/evaluate.py experiments/soc-io/test_soc_io.py experiments/soc-io/test_evaluate.py experiments/soc-io/connectors/windows_sysmon.py experiments/soc-io/connectors/test_windows_sysmon.py experiments/soc-io/service/app.py experiments/soc-io/service/test_app.py experiments/soc-io/service/test_app_db.py experiments/soc-io/service/test_oidc_integration.py
+      - name: Run unit tests
+        run: python -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
+      - name: Run offline demo and evaluator
+        run: |
+          python experiments/soc-io/soc_io.py experiments/soc-io/examples/events.jsonl --json > /tmp/soc-io-report.json
+          python -m json.tool /tmp/soc-io-report.json > /dev/null
+          python experiments/soc-io/evaluate.py experiments/soc-io/examples/events.jsonl experiments/soc-io/examples/labels.jsonl > /tmp/soc-io-evaluation.json
+          python -m json.tool /tmp/soc-io-evaluation.json > /dev/null
+
+  windows-sysmon-lab:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_windows_sysmon_lab
+    runs-on: [self-hosted, Windows, X64, soc-io-sysmon-lab]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate real local Sysmon collection
+        shell: pwsh
+        env:
+          SOCIO_VALIDATION_SUMMARY_PATH: ${{ runner.temp }}\soc-io-sysmon-validation-summary.json
+        run: |
+          .\experiments\soc-io\connectors\validate_windows_sysmon.ps1 -RunBenignProcessTest
+      - name: Retain sanitized validation result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soc-io-windows-sysmon-sanitized-summary
+          path: ${{ runner.temp }}\soc-io-sysmon-validation-summary.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Record validation boundary
+        shell: pwsh
+        run: |
+          Write-Output "Validation ran on a configured self-hosted Windows/Sysmon lab runner."
+          Write-Output "Raw event JSONL remains in the runner user's TEMP directory and is not uploaded as a CI artifact."
+
+  real-oidc-provider-smoke:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_real_oidc_provider_test
+    runs-on: ubuntu-latest
+    env:
+      SOCIO_OIDC_ISSUER: ${{ vars.SOCIO_OIDC_ISSUER }}
+      SOCIO_OIDC_AUDIENCE: ${{ vars.SOCIO_OIDC_AUDIENCE }}
+      SOCIO_OIDC_JWKS_URL: ${{ vars.SOCIO_OIDC_JWKS_URL }}
+      SOCIO_OIDC_TEST_TOKEN: ${{ secrets.SOCIO_OIDC_TEST_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python -m pip install -r service/requirements-test.txt
+        working-directory: experiments/soc-io
+      - name: Require staging OIDC configuration without printing secrets
+        shell: bash
+        run: |
+          test -n "$SOCIO_OIDC_ISSUER" || (echo "SOCIO_OIDC_ISSUER repository variable is required" >&2; exit 1)
+          test -n "$SOCIO_OIDC_AUDIENCE" || (echo "SOCIO_OIDC_AUDIENCE repository variable is required" >&2; exit 1)
+          test -n "$SOCIO_OIDC_JWKS_URL" || (echo "SOCIO_OIDC_JWKS_URL repository variable is required" >&2; exit 1)
+          test -n "$SOCIO_OIDC_TEST_TOKEN" || (echo "SOCIO_OIDC_TEST_TOKEN repository secret is required" >&2; exit 1)
+      - name: Verify staging access token against real provider JWKS
+        run: python -m unittest service.test_oidc_provider -v
+        working-directory: experiments/soc-io
