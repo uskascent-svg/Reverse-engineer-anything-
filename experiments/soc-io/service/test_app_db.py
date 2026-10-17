@@ -113,6 +113,24 @@ class CaseApiPostgresIntegrationTests(unittest.TestCase):
         self.assertEqual(audit.status_code, 200, audit.text)
         self.assertTrue(any(item["action"] == "case.create" for item in audit.json()))
 
+    def test_database_role_cannot_read_users_outside_selected_tenant(self):
+        with psycopg.connect(self.app_dsn) as conn:
+            with conn.transaction():
+                conn.execute(
+                    "SELECT set_config('soc_io.tenant_id', %s, true)",
+                    (str(self.tenant_a),),
+                )
+                visible = conn.execute(
+                    "SELECT id FROM socio_users WHERE id = %s",
+                    (self.alice,),
+                ).fetchall()
+                hidden = conn.execute(
+                    "SELECT id FROM socio_users WHERE id = %s",
+                    (self.bob,),
+                ).fetchall()
+                self.assertEqual(len(visible), 1)
+                self.assertEqual(hidden, [])
+
     def test_tenant_membership_is_required(self):
         response = self.request_as("alice", self.tenant_b, "GET", "/api/cases")
         self.assertEqual(response.status_code, 403)
