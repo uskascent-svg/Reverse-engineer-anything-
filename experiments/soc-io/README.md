@@ -27,6 +27,15 @@ python3 -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
 All included sample events and indicators are synthetic/documentation-only.
 The IOC example uses reserved example IP ranges and an invalid example domain.
 
+## Analyst dashboard
+
+Open `experiments/soc-io/dashboard.html` in a browser. It is a standalone
+local page with sample data, severity/status/search filters, alert evidence
+details, local workflow status changes, and JSON export. Use **Load JSON report**
+to load the engine's `--json` output. The page does not make network requests;
+status edits remain in the current page session and are not written back to the
+source report unless exported.
+
 ## Event schema
 
 Each non-empty JSONL line is an object with required fields:
@@ -54,6 +63,29 @@ accepts already-normalized events; it does not collect logs from endpoints.
 These are deterministic leads, not verdicts. The rules are intentionally
 small and will produce false positives. Indicator matches are not independently
 verified against a threat-intelligence service.
+
+## Labeled evaluation
+
+The event-level evaluation script computes precision, recall, F1, specificity,
+false-positive rate, accuracy, confusion counts, and how many predicted event
+IDs had no label. Labels are manually reviewed JSONL rows such as:
+
+```json
+{"event_id":"event-123","malicious":true}
+{"event_id":"event-124","malicious":false}
+```
+
+Run it with separate, reviewed labels:
+
+```bash
+python3 experiments/soc-io/evaluate.py experiments/soc-io/examples/events.jsonl experiments/soc-io/examples/labels.jsonl
+```
+
+The included labels are synthetic demonstration data only. Event-level scoring
+is a rough proxy for alert quality, especially for correlated alerts. For
+credible results, use a broad, representative dataset, time-separated holdout
+sets, independent labels, confidence intervals, and drift monitoring. Do not
+tune and report on the same sample.
 
 ## Output and safety boundaries
 
