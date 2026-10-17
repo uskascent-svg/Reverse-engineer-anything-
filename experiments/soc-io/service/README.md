@@ -85,11 +85,7 @@ python -m pip install -r service/requirements.txt
 python -m unittest discover -s . -p 'test_*.py' -v
 ```
 
-These tests cover guardrails and input validation. They do **not** replace integration
-tests against a disposable PostgreSQL database and a test OIDC issuer. Before shared
-deployment, add migration tests, cross-tenant isolation tests, token/JWKS failure tests,
-concurrent update tests, authorization matrix tests, database privilege checks, and
-backup/restore drills.
+The workflow also runs integration tests against a disposable PostgreSQL 16 service, using a test-only application role to exercise persistence, tenant isolation, role guards, notes, events, and audit rows. Those tests patch token verification and therefore do not validate a real OIDC provider/JWKS endpoint. Before shared deployment, add a reviewed migration runner, real test-issuer/JWKS integration, concurrent update tests, broader authorization matrix tests, database privilege checks, and backup/restore drills.
 
 ## Important limitations and review items
 
