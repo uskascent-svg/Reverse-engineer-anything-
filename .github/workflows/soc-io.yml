@@ -1,0 +1,35 @@
+name: SOC-IO prototype checks
+
+on:
+  pull_request:
+    paths:
+      - "experiments/soc-io/**"
+      - ".github/workflows/soc-io.yml"
+  push:
+    branches: ["feature/soc-io-proposal"]
+    paths:
+      - "experiments/soc-io/**"
+      - ".github/workflows/soc-io.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Python sources
+        run: python -m py_compile experiments/soc-io/soc_io.py experiments/soc-io/evaluate.py experiments/soc-io/test_soc_io.py experiments/soc-io/test_evaluate.py
+      - name: Run unit tests
+        run: python -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
+      - name: Run offline demo and evaluator
+        run: |
+          python experiments/soc-io/soc_io.py experiments/soc-io/examples/events.jsonl --json > /tmp/soc-io-report.json
+          python -m json.tool /tmp/soc-io-report.json > /dev/null
+          python experiments/soc-io/evaluate.py experiments/soc-io/examples/events.jsonl experiments/soc-io/examples/labels.jsonl > /tmp/soc-io-evaluation.json
+          python -m json.tool /tmp/soc-io-evaluation.json > /dev/null
