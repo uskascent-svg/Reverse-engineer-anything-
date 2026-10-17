@@ -1,6 +1,6 @@
 # SOC-IO — isolated prototype
 
-SOC-IO is an **experimental SOC engineering project** with an offline-first event triage prototype and one opt-in Windows/Sysmon local event-log adapter. It is not a production SIEM/SOC, has no multi-user service or persistent RBAC-backed case management yet, and has no trained or validated prediction model. It cannot guarantee 100% accuracy. Do not use it as
+SOC-IO is an **experimental SOC engineering project** with an offline-first event triage prototype and one opt-in Windows/Sysmon local event-log adapter. It is not a production SIEM/SOC. An experimental OIDC-authenticated FastAPI case API and PostgreSQL schema now provide initial persistent case/note/audit routes, but deployment-grade multi-user readiness and database integration validation are still incomplete. No trained or validated prediction model exists. It cannot guarantee 100% accuracy. Do not use it as
 the sole basis for incident decisions.
 
 This folder is intentionally isolated from REA's CLI/MCP and default package.
@@ -24,6 +24,24 @@ python3 -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
 
 All included sample events and indicators are synthetic/documentation-only.
 The IOC example uses reserved example IP ranges and an invalid example domain.
+
+## Authenticated multi-user case API (experimental)
+
+The initial FastAPI API and PostgreSQL schema are in `experiments/soc-io/service/`.
+Setup, OIDC configuration, role boundaries, endpoints, and limitations are documented
+in [service/README.md](service/README.md). This API requires a configured OIDC issuer,
+audience, HTTPS JWKS endpoint, PostgreSQL database, and pre-provisioned tenant
+memberships. It is not connected to the static HTML dashboard. Database integration
+tests, migration tooling, deployment hardening, and backup/restore validation remain
+required before shared use.
+
+## Windows / Sysmon lab validation
+
+The local collector has unit tests, but CI cannot validate a real Windows event log.
+Use [the dedicated lab procedure](connectors/WINDOWS_SYSMON_VALIDATION.md) and the
+explicitly opted-in `connectors/validate_windows_sysmon.ps1` script on a dedicated
+Windows/Sysmon test host. A passing lab result validates only the tested host and
+event path; it does not establish production coverage or detection efficacy.
 
 ## Analyst dashboard
 
