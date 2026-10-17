@@ -39,7 +39,7 @@ Get-WinEvent -ListLog 'Microsoft-Windows-Sysmon/Operational' |
   Select-Object LogName, IsEnabled, RecordCount
 
 python --version
-.`validate_windows_sysmon.ps1` -RunBenignProcessTest
+.\validate_windows_sysmon.ps1 -RunBenignProcessTest
 ```
 
 The script writes a uniquely named JSONL evidence file under the current user's

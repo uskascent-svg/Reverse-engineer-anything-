@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Annotated, Any
 from urllib.parse import urlparse
 from uuid import UUID
@@ -61,9 +62,15 @@ def oidc_settings() -> tuple[str, str, str]:
     return issuer, audience, jwks_url
 
 
+@lru_cache(maxsize=8)
+def _jwks_client(jwks_url: str) -> PyJWKClient:
+    # Reuse the bounded JWKS cache across requests; cap network wait time.
+    return PyJWKClient(jwks_url, cache_keys=True, lifespan=300, timeout=5)
+
+
 def verify_token(token: str) -> dict[str, Any]:
     issuer, audience, jwks_url = oidc_settings()
-    client = PyJWKClient(jwks_url, cache_keys=True, lifespan=300)
+    client = _jwks_client(jwks_url)
     try:
         signing_key = client.get_signing_key_from_jwt(token)
         claims = jwt.decode(
