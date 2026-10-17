@@ -4,3 +4,5 @@ self-hosted-runner:
     - ghidra-12-1-2
     # Hosted label introduced after the pinned actionlint release.
     - macos-15-intel
+    # Dedicated runner label for the opt-in real Windows/Sysmon validation job.
+    - soc-io-sysmon-lab
