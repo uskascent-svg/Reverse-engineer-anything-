@@ -42,7 +42,7 @@ No connector may silently upload collected telemetry to a third-party service. N
 
 ### Gate C — persistent cases and access control
 
-Use a supported transactional database for durable state. The in-memory HTML dashboard is only a prototype and must not be represented as persistent case management.
+Use a supported transactional database for durable state. The in-memory HTML dashboard is only a prototype and must not be represented as persistent case management. The current PostgreSQL bootstrap schema enforces tenant membership for case creators/assignees and history actors with composite foreign keys as defense in depth; any already-provisioned database requires a reviewed migration and integrity audit before this protection can be claimed.
 
 Minimum entities:
 - Case: immutable ID, title, state, priority, owner, tenant, timestamps, linked alerts, assets, and disposition.
