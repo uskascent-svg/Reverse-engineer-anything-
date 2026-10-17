@@ -18,15 +18,31 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: socio_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d socio_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SOCIO_TEST_ADMIN_DSN: postgresql://postgres:postgres@localhost:5432/socio_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install service test dependencies
-        run: python -m pip install -r experiments/soc-io/service/requirements.txt
+        run: python -m pip install -r experiments/soc-io/service/requirements-test.txt
       - name: Compile Python sources
-        run: python -m py_compile experiments/soc-io/soc_io.py experiments/soc-io/evaluate.py experiments/soc-io/test_soc_io.py experiments/soc-io/test_evaluate.py experiments/soc-io/connectors/windows_sysmon.py experiments/soc-io/connectors/test_windows_sysmon.py experiments/soc-io/service/app.py experiments/soc-io/service/test_app.py
+        run: python -m py_compile experiments/soc-io/soc_io.py experiments/soc-io/evaluate.py experiments/soc-io/test_soc_io.py experiments/soc-io/test_evaluate.py experiments/soc-io/connectors/windows_sysmon.py experiments/soc-io/connectors/test_windows_sysmon.py experiments/soc-io/service/app.py experiments/soc-io/service/test_app.py experiments/soc-io/service/test_app_db.py
       - name: Run unit tests
         run: python -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
       - name: Run offline demo and evaluator
