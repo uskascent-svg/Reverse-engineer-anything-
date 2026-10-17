@@ -26,7 +26,7 @@ self-hosted runner registered to this repository with labels
 with Sysmon and appropriate local event-log read permissions. Configure that runner
 only on a dedicated lab host, then use Actions → SOC-IO prototype checks → Run workflow
 and explicitly enable the Windows lab input. Without that runner, the job will not run.
-It does not upload raw event JSONL as an artifact.
+It uploads only a sanitized JSON summary artifact with 14-day retention; raw event JSONL stays in the runner user's TEMP directory and is never uploaded.
 
 ## Run the validation
 
