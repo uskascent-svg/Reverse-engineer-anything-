@@ -24,7 +24,7 @@ CHANNEL = "Microsoft-Windows-Sysmon/Operational"
 # environment variables and parsed as data, never interpolated into PowerShell.
 POWERSHELL_SCRIPT = r"""
 $ErrorActionPreference = 'Stop'
-$start = [DateTimeOffset]::Parse($env:SOCIO_SYSMon_START).LocalDateTime
+$start = [DateTimeOffset]::Parse($env:SOCIO_SYSMON_START).LocalDateTime
 $end = [DateTimeOffset]::Parse($env:SOCIO_SYSMON_END).LocalDateTime
 $limit = [Math]::Min([Math]::Max([int]$env:SOCIO_SYSMON_LIMIT, 1), 20000)
 $channel = 'Microsoft-Windows-Sysmon/Operational'
