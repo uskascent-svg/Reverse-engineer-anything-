@@ -41,7 +41,13 @@ CREATE TABLE IF NOT EXISTS socio_cases (
     version bigint NOT NULL DEFAULT 1 CHECK (version > 0),
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (tenant_id, id)
+    UNIQUE (tenant_id, id),
+    -- Defense in depth: case actors/assignees must belong to this tenant even
+    -- when a write bypasses the API authorization layer.
+    FOREIGN KEY (tenant_id, created_by)
+        REFERENCES socio_memberships(tenant_id, user_id) ON DELETE RESTRICT,
+    FOREIGN KEY (tenant_id, assigned_to)
+        REFERENCES socio_memberships(tenant_id, user_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS socio_case_events (
@@ -52,7 +58,9 @@ CREATE TABLE IF NOT EXISTS socio_case_events (
     event_type text NOT NULL CHECK (length(event_type) BETWEEN 1 AND 100),
     event_data jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),
-    FOREIGN KEY (tenant_id, case_id) REFERENCES socio_cases(tenant_id, id) ON DELETE RESTRICT
+    FOREIGN KEY (tenant_id, case_id) REFERENCES socio_cases(tenant_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (tenant_id, actor_user_id)
+        REFERENCES socio_memberships(tenant_id, user_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS socio_case_notes (
@@ -62,7 +70,9 @@ CREATE TABLE IF NOT EXISTS socio_case_notes (
     author_user_id uuid NOT NULL REFERENCES socio_users(id) ON DELETE RESTRICT,
     body text NOT NULL CHECK (length(body) BETWEEN 1 AND 50000),
     created_at timestamptz NOT NULL DEFAULT now(),
-    FOREIGN KEY (tenant_id, case_id) REFERENCES socio_cases(tenant_id, id) ON DELETE RESTRICT
+    FOREIGN KEY (tenant_id, case_id) REFERENCES socio_cases(tenant_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (tenant_id, author_user_id)
+        REFERENCES socio_memberships(tenant_id, user_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS socio_case_evidence (
@@ -76,7 +86,9 @@ CREATE TABLE IF NOT EXISTS socio_case_evidence (
     reference_uri text NOT NULL CHECK (length(reference_uri) <= 4096),
     collected_at timestamptz NOT NULL DEFAULT now(),
     added_by uuid NOT NULL REFERENCES socio_users(id) ON DELETE RESTRICT,
-    FOREIGN KEY (tenant_id, case_id) REFERENCES socio_cases(tenant_id, id) ON DELETE RESTRICT
+    FOREIGN KEY (tenant_id, case_id) REFERENCES socio_cases(tenant_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (tenant_id, added_by)
+        REFERENCES socio_memberships(tenant_id, user_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS socio_audit_events (
@@ -89,7 +101,9 @@ CREATE TABLE IF NOT EXISTS socio_audit_events (
     request_id text NOT NULL DEFAULT '' CHECK (length(request_id) <= 256),
     outcome text NOT NULL CHECK (outcome IN ('success', 'denied', 'failure')),
     metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    FOREIGN KEY (tenant_id, actor_user_id)
+        REFERENCES socio_memberships(tenant_id, user_id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS socio_cases_tenant_status_idx ON socio_cases (tenant_id, status, updated_at DESC);
