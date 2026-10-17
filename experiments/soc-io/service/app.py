@@ -40,7 +40,23 @@ def oidc_settings() -> tuple[str, str, str]:
         raise RuntimeError(
             "Set SOCIO_OIDC_ISSUER, SOCIO_OIDC_AUDIENCE, and SOCIO_OIDC_JWKS_URL"
         )
-    if urlparse(jwks_url).scheme != "https" or not urlparse(jwks_url).netloc:
+    issuer_url = urlparse(issuer)
+    jwks = urlparse(jwks_url)
+    if (
+        issuer_url.scheme != "https"
+        or not issuer_url.hostname
+        or issuer_url.username
+        or issuer_url.password
+        or issuer_url.fragment
+    ):
+        raise RuntimeError("SOCIO_OIDC_ISSUER must be an absolute HTTPS issuer URL")
+    if (
+        jwks.scheme != "https"
+        or not jwks.hostname
+        or jwks.username
+        or jwks.password
+        or jwks.fragment
+    ):
         raise RuntimeError("SOCIO_OIDC_JWKS_URL must be an absolute HTTPS URL")
     return issuer, audience, jwks_url
 
