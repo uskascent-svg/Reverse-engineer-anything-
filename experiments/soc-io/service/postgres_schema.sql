@@ -106,6 +106,8 @@ ALTER TABLE socio_tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE socio_tenants FORCE ROW LEVEL SECURITY;
 ALTER TABLE socio_memberships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE socio_memberships FORCE ROW LEVEL SECURITY;
+ALTER TABLE socio_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE socio_users FORCE ROW LEVEL SECURITY;
 ALTER TABLE socio_cases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE socio_cases FORCE ROW LEVEL SECURITY;
 ALTER TABLE socio_case_events ENABLE ROW LEVEL SECURITY;
@@ -124,6 +126,13 @@ DROP POLICY IF EXISTS socio_memberships_tenant_scope ON socio_memberships;
 CREATE POLICY socio_memberships_tenant_scope ON socio_memberships
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
     WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_users_tenant_scope ON socio_users;
+CREATE POLICY socio_users_tenant_scope ON socio_users
+    USING (EXISTS (
+        SELECT 1 FROM socio_memberships m
+        WHERE m.user_id = socio_users.id
+          AND m.tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid
+    ));
 DROP POLICY IF EXISTS socio_cases_tenant_scope ON socio_cases;
 CREATE POLICY socio_cases_tenant_scope ON socio_cases
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
