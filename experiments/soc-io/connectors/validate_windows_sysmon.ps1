@@ -20,7 +20,8 @@ $summary = [ordered]@{
     matched_benign_test_event = $false
     network_access_by_connector = $false
     response_actions = $false
-    raw_event_file_retained = $false
+    raw_event_file_uploaded = $false
+    raw_event_file_stays_local = $true
 }
 
 try {
