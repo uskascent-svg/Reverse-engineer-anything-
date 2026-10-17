@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile Python sources
-        run: python -m py_compile experiments/soc-io/soc_io.py experiments/soc-io/evaluate.py experiments/soc-io/test_soc_io.py experiments/soc-io/test_evaluate.py
+        run: python -m py_compile experiments/soc-io/soc_io.py experiments/soc-io/evaluate.py experiments/soc-io/test_soc_io.py experiments/soc-io/test_evaluate.py experiments/soc-io/connectors/windows_sysmon.py experiments/soc-io/connectors/test_windows_sysmon.py
       - name: Run unit tests
         run: python -m unittest discover -s experiments/soc-io -p 'test_*.py' -v
       - name: Run offline demo and evaluator
