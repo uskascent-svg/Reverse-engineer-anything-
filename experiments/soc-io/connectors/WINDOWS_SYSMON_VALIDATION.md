@@ -18,6 +18,16 @@ Do not use a production endpoint for first validation.
 The connector only reads local events. It does not install/configure Sysmon, reach
 remote endpoints, read credentials, upload logs, or perform response actions.
 
+## Optional GitHub Actions lab job
+
+The SOC-IO workflow also has a manual `run_windows_sysmon_lab` input. It requires a
+self-hosted runner registered to this repository with labels
+`self-hosted`, `Windows`, `X64`, and `soc-io-sysmon-lab`, already provisioned
+with Sysmon and appropriate local event-log read permissions. Configure that runner
+only on a dedicated lab host, then use Actions → SOC-IO prototype checks → Run workflow
+and explicitly enable the Windows lab input. Without that runner, the job will not run.
+It does not upload raw event JSONL as an artifact.
+
 ## Run the validation
 
 Open PowerShell in `experiments/soc-io/connectors`. Review the script before running.
