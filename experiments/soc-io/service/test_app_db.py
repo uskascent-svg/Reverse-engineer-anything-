@@ -25,6 +25,12 @@ class CaseApiPostgresIntegrationTests(unittest.TestCase):
         cls.bob = UUID("dddddddd-dddd-4ddd-8ddd-dddddddddddd")
 
         with psycopg.connect(cls.admin_dsn, autocommit=True) as conn:
+            # This suite recreates public schema and is intentionally restricted
+            # to the disposable CI database; fail closed for any other target.
+            if conn.info.dbname != "socio_test" or conn.info.host not in {"localhost", "127.0.0.1", "::1"}:
+                raise RuntimeError(
+                    "Destructive PostgreSQL integration tests require local database socio_test"
+                )
             conn.execute("DROP SCHEMA public CASCADE")
             conn.execute("CREATE SCHEMA public")
             schema = Path(__file__).with_name("postgres_schema.sql").read_text(encoding="utf-8")
