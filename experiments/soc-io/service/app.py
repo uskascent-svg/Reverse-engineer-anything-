@@ -336,7 +336,7 @@ def update_case(
     # Column names come only from the fixed allow-list above; values are bound.
     set_clause = ", ".join(f"{key} = %s" for key in assignments)
     values = [updates[key] for key in assignments]
-    values.extend([existing["version"] + 1, case_id])
+    values.extend([existing["version"] + 1, case_id, existing["version"]])
     row = principal.conn.execute(
         f"""
         UPDATE socio_cases SET {set_clause}, version = %s, updated_at = now()
@@ -344,7 +344,7 @@ def update_case(
         RETURNING id, tenant_id, title, summary, status, severity, assigned_to,
                   created_by, version, created_at, updated_at
         """,
-        tuple(values[:-1] + [case_id, existing["version"]]),
+        tuple(values),
     ).fetchone()
     if row is None:
         raise HTTPException(status_code=409, detail="Case changed concurrently; reload and retry")
