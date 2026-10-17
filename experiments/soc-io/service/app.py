@@ -9,6 +9,7 @@ import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Annotated, Any
+from urllib.parse import urlparse
 from uuid import UUID
 
 import jwt
@@ -39,6 +40,8 @@ def oidc_settings() -> tuple[str, str, str]:
         raise RuntimeError(
             "Set SOCIO_OIDC_ISSUER, SOCIO_OIDC_AUDIENCE, and SOCIO_OIDC_JWKS_URL"
         )
+    if urlparse(jwks_url).scheme != "https" or not urlparse(jwks_url).netloc:
+        raise RuntimeError("SOCIO_OIDC_JWKS_URL must be an absolute HTTPS URL")
     return issuer, audience, jwks_url
 
 
