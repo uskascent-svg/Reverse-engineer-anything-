@@ -396,12 +396,15 @@ def add_note(
 ):
     require_role(principal.role, {"analyst", "incident_lead", "administrator"})
     _case_or_404(principal, case_id)
+    note_body = body.body.strip()
+    if not note_body:
+        raise HTTPException(status_code=422, detail="Note cannot be blank")
     note = principal.conn.execute(
         """
         INSERT INTO socio_case_notes (tenant_id, case_id, author_user_id, body)
         VALUES (%s, %s, %s, %s)
         RETURNING id, case_id, author_user_id, body, created_at
-        """, (principal.tenant_id, case_id, principal.user_id, body.body.strip()),
+        """, (principal.tenant_id, case_id, principal.user_id, note_body),
     ).fetchone()
     principal.conn.execute(
         """
