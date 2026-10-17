@@ -72,7 +72,7 @@ connector: no scheduling, durable checkpoints, multi-host orchestration, health
 API, or tenant-aware ingestion store is implemented. Multi-user deployment also
 requires a server-side identity provider, database-backed cases, authorization
 on every API request, tenant isolation, audit history, and backup/restore tests.
-See [the production readiness contract](../../docs/soc-io-production-readiness.md).
+See [the production readiness contract](../../docs/soc-io-production-readiness.md). A preliminary PostgreSQL case-store schema is in [`service/postgres_schema.sql`](service/postgres_schema.sql), with its security limitations documented in [`service/README.md`](service/README.md). It is schema groundwork only; no multi-user API or authentication service is implemented.
 
 ## Event schema
 
