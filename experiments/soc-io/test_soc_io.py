@@ -32,6 +32,27 @@ class SocIoTests(unittest.TestCase):
         alerts = detect(events, {"ips": set(), "domains": set(), "hashes": set()})
         self.assertIn("SOCIO-AUTH-002", {alert.rule_id for alert in alerts})
 
+    def test_authentication_failures_from_distinct_sources_are_not_combined(self):
+        events = [
+            event("a1", 0, source="idp-a"),
+            event("a2", 1, source="idp-a"),
+            event("a3", 2, source="idp-a"),
+            event("b1", 3, source="idp-b"),
+            event("b2", 4, source="idp-b"),
+        ]
+        alerts = detect(events, {"ips": set(), "domains": set(), "hashes": set()})
+        self.assertNotIn("SOCIO-AUTH-001", {alert.rule_id for alert in alerts})
+
+    def test_success_from_another_source_is_not_correlated_with_failures(self):
+        events = [
+            event("a1", 0, source="idp-a"),
+            event("a2", 1, source="idp-a"),
+            event("a3", 2, source="idp-a"),
+            event("b-success", 3, "success", source="idp-b"),
+        ]
+        alerts = detect(events, {"ips": set(), "domains": set(), "hashes": set()})
+        self.assertNotIn("SOCIO-AUTH-002", {alert.rule_id for alert in alerts})
+
     def test_encoded_powershell_is_explainable(self):
         item = parse_event({
             "event_id": "p1", "timestamp": "2026-10-17T08:00:00Z",
