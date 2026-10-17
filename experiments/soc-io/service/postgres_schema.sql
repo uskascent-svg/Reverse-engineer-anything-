@@ -102,6 +102,10 @@ CREATE INDEX IF NOT EXISTS socio_audit_timeline_idx ON socio_audit_events (tenan
 -- membership before setting the transaction-local tenant ID. A shared DB role
 -- that can issue arbitrary SQL can set custom GUCs; RLS is not a substitute for
 -- a trusted API boundary, parameterized queries, or database role separation.
+ALTER TABLE socio_tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE socio_tenants FORCE ROW LEVEL SECURITY;
+ALTER TABLE socio_memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE socio_memberships FORCE ROW LEVEL SECURITY;
 ALTER TABLE socio_cases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE socio_cases FORCE ROW LEVEL SECURITY;
 ALTER TABLE socio_case_events ENABLE ROW LEVEL SECURITY;
@@ -113,18 +117,30 @@ ALTER TABLE socio_case_evidence FORCE ROW LEVEL SECURITY;
 ALTER TABLE socio_audit_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE socio_audit_events FORCE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS socio_tenants_scope ON socio_tenants;
+CREATE POLICY socio_tenants_scope ON socio_tenants
+    USING (id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_memberships_tenant_scope ON socio_memberships;
+CREATE POLICY socio_memberships_tenant_scope ON socio_memberships
+    USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
+    WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_cases_tenant_scope ON socio_cases;
 CREATE POLICY socio_cases_tenant_scope ON socio_cases
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
     WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_case_events_tenant_scope ON socio_case_events;
 CREATE POLICY socio_case_events_tenant_scope ON socio_case_events
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
     WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_case_notes_tenant_scope ON socio_case_notes;
 CREATE POLICY socio_case_notes_tenant_scope ON socio_case_notes
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
     WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_case_evidence_tenant_scope ON socio_case_evidence;
 CREATE POLICY socio_case_evidence_tenant_scope ON socio_case_evidence
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
     WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
+DROP POLICY IF EXISTS socio_audit_events_tenant_scope ON socio_audit_events;
 CREATE POLICY socio_audit_events_tenant_scope ON socio_audit_events
     USING (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid)
     WITH CHECK (tenant_id = nullif(current_setting('soc_io.tenant_id', true), '')::uuid);
