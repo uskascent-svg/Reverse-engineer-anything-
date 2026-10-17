@@ -17,7 +17,7 @@ proof of runtime configuration. It does not certify detection accuracy.
   audience, required claims, signature, and expiry with a small clock-skew allowance.
 - Issuer and JWKS endpoints must be absolute HTTPS URLs; URL user-info and fragments
   are rejected.
-- Tenant membership is independently checked after token validation.
+- Tenant membership is independently checked after token validation; the `socio_users` table now also has RLS limited to identities with membership in the selected tenant.
 - Query values are parameterized; dynamic update columns come from an allow-list.
 - Case updates use version checks; request fields and list sizes are bounded.
 - Viewers cannot mutate cases; analysts cannot assign cases or move cases into terminal
@@ -32,8 +32,7 @@ proof of runtime configuration. It does not certify detection accuracy.
 - No dedicated Windows/Sysmon runner has executed the benign event test in this session.
 - The local HTTPS JWKS suite tests the actual PyJWT/JWKS code path using an ephemeral
   test key, but the configured external identity provider has not been exercised.
-- The PostgreSQL suite is useful integration coverage but is not a substitute for a
-  broader database privilege and migration review.
+- The PostgreSQL suite is useful integration coverage, including a tenant-scoped identity-row check, but is not a substitute for a broader database privilege and migration review.
 
 **Required:** execute the manual Windows lab job and retain its sanitized artifact;
 execute the service.test_oidc_provider test with a short-lived token from the selected staging
