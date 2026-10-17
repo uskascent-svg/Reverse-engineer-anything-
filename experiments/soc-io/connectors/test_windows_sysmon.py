@@ -1,10 +1,9 @@
-import contextlib
 import io
 import unittest
 from datetime import datetime, timezone
 from unittest.mock import patch
 
-import windows_sysmon as connector
+from connectors import windows_sysmon as connector
 
 
 class WindowsSysmonConnectorTests(unittest.TestCase):
