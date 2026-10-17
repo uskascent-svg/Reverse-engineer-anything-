@@ -177,13 +177,13 @@ def _alert(rule_id: str, title: str, severity: str, confidence: str, summary: st
 
 def detect(events: list[Event], iocs: dict[str, set[str]]) -> list[Alert]:
     alerts: list[Alert] = []
-    failed: dict[tuple[str, str], list[Event]] = defaultdict(list)
+    failed: dict[tuple[str, str, str], list[Event]] = defaultdict(list)
     for event in events:
         if event.event_type in {"authentication", "auth", "login"} and event.outcome in {"failed", "failure", "denied"}:
-            failed[(event.user, event.src_ip)].append(event)
+            failed[(event.source, event.user, event.src_ip)].append(event)
 
     # Repeated failures and subsequent successful authentication are separate, explainable detections.
-    for (user, ip), group in failed.items():
+    for (source, user, ip), group in failed.items():
         group.sort(key=lambda item: item.timestamp)
         for index, event in enumerate(group):
             window_events = [candidate for candidate in group[index:]
@@ -191,12 +191,12 @@ def detect(events: list[Event], iocs: dict[str, set[str]]) -> list[Alert]:
             if len(window_events) >= 5:
                 alerts.append(_alert(
                     "SOCIO-AUTH-001", "Repeated authentication failures", "high", "medium",
-                    f"{len(window_events)} failed authentication events for one user/source IP within 10 minutes.",
-                    window_events, {"user": user, "source_ip": ip},
+                    f"{len(window_events)} failed authentication events for one user/source IP within 10 minutes in source {source}.",
+                    window_events, {"source": source, "user": user, "source_ip": ip},
                     ["Confirm whether the source is an approved scanner or user.", "Review identity-provider logs and MFA outcomes.", "Check for successful authentication after the failures."]
                 ))
                 break
-        successes = [event for event in events if event.user == user and event.src_ip == ip
+        successes = [event for event in events if event.source == source and event.user == user and event.src_ip == ip
                      and event.event_type in {"authentication", "auth", "login"}
                      and event.outcome in {"success", "succeeded", "allowed"}]
         for success in successes:
@@ -204,8 +204,8 @@ def detect(events: list[Event], iocs: dict[str, set[str]]) -> list[Alert]:
             if len(prior) >= 3:
                 alerts.append(_alert(
                     "SOCIO-AUTH-002", "Successful login after repeated failures", "high", "high",
-                    f"A successful authentication followed {len(prior)} failed attempts for the same user/source IP within 10 minutes.",
-                    prior + [success], {"user": user, "source_ip": ip},
+                    f"A successful authentication followed {len(prior)} failed attempts for the same user/source IP within 10 minutes in source {source}.",
+                    prior + [success], {"source": source, "user": user, "source_ip": ip},
                     ["Verify the login with the account owner and MFA records.", "Inspect session creation and subsequent activity.", "Revoke sessions only through an approved incident runbook."]
                 ))
 
