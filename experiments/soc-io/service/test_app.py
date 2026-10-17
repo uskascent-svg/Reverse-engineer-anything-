@@ -40,6 +40,15 @@ class ServiceSecurityTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "SOCIO_OIDC_ISSUER"):
                 verify_token("not-a-token")
 
+    def test_jwks_url_must_use_https(self):
+        with patch.dict(os.environ, {
+            "SOCIO_OIDC_ISSUER": "https://issuer.example",
+            "SOCIO_OIDC_AUDIENCE": "soc-io",
+            "SOCIO_OIDC_JWKS_URL": "http://issuer.example/jwks",
+        }, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "HTTPS"):
+                oidc_settings()
+
     def test_case_input_rejects_unknown_fields(self):
         with self.assertRaises(ValidationError):
             CaseCreate(title="Investigate alert", unreviewed_admin=True)
