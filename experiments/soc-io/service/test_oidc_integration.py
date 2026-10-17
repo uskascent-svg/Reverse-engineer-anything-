@@ -180,7 +180,7 @@ class OidcJwksIntegrationTests(unittest.TestCase):
             "sub": "attacker",
             "iat": now,
             "exp": now + timedelta(minutes=5),
-        }, "not-a-key", algorithm="HS256")
+        }, "x" * 32, algorithm="HS256")
         with self.assertRaises(HTTPException) as caught:
             self.verify(token)
         self.assertEqual(caught.exception.status_code, 401)
