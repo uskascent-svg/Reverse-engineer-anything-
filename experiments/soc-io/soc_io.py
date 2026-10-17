@@ -231,7 +231,7 @@ def detect(events: list[Event], iocs: dict[str, set[str]]) -> list[Alert]:
                 or (domain and domain in iocs["domains"])
                 or (event.file_hash and event.file_hash in iocs["hashes"])):
             matched = []
-            if event.src_ip.lower() in iocs["ips"] if event.src_ip else False:
+            if event.src_ip and event.src_ip.lower() in iocs["ips"]:
                 matched.append("source IP")
             if domain and domain in iocs["domains"]:
                 matched.append("destination/domain")
