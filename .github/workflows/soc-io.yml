@@ -1,4 +1,5 @@
 name: SOC-IO prototype checks
+# Keep this experimental workflow's formatting aligned with the repository Oxfmt check.
 
 on:
   pull_request:
